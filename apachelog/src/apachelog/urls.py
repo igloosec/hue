@@ -18,10 +18,12 @@
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns('apachelog',
-  url(r'^$', 'views.index'),
-	url(r'^view/fetch_selected_time_option', 'views.fetch_selected_time_option', name='fetch_selected_time_option'),
+    url(r'^$', 'views.index'),
+    url(r'^view/fetch_selected_time_option', 'views.fetch_selected_time_option', name='fetch_selected_time_option'),
 	url(r'^view/fetch_selected_alert_option', 'views.fetch_selected_alert_option', name='fetch_selected_alert_option'),
-  url(r'^view/update_sel_time', 'views.update_sel_time', name='update_sel_time'),
-  url(r'^view/update_sel_alert', 'views.update_sel_alert', name='update_sel_alert'),
+    url(r'^view/update_sel_time', 'views.update_sel_time', name='update_sel_time'),
+    url(r'^view/update_sel_alert', 'views.update_sel_alert', name='update_sel_alert'),
+    url(r'^view/fetch_alert$', 'views.fetch_alert', name='alert'),
+    url(r'^view/fetch_timeline$', 'views.fetch_timeline', name='timeline'),
 
 )

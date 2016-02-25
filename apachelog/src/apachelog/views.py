@@ -21,7 +21,7 @@ from desktop.lib.django_util import render, JsonResponse
 import datetime, operator
 
 from apachelog.models import SelectedOption
-
+from kafka.consumer.group import KafkaConsumer
 
 OPS=dict(add=operator.add, subtract=operator.sub, multiply=operator.mul, divide=operator.truediv)
 OP_STRING=dict(add="+", subtract="-", multiply="*", divide="/")
@@ -81,3 +81,67 @@ def update_sel_time(request):
 def update_sel_alert(request):
   return JsonResponse(update_sel_data(request, 'alert'));
 
+def fetch_timeline(request):
+  consumer = KafkaConsumer(
+          'ApacheLogAlert',
+          bootstrap_servers='en1:9092,en2:9092,en3:9092',
+          enable_auto_commit=True,
+          auto_offset_reset='earliest'
+  )
+
+  test = consumer.poll(5000)
+  i = 0
+  temp = {}
+  for topic in test:
+    cc = test.get(topic)
+    for msg in cc:
+      print msg
+      x = msg.key.split(' ')[0]
+      y = msg.value.split(',')[2]
+      key = msg.value.split(',')[1]
+
+      if key in temp:
+        temp[key].append({'x': int(x), 'y': int(y)})
+      else:
+        temp[key] = []
+        temp[key].append({'x': int(x), 'y': int(y)})
+  result = []
+  for key in temp:
+    result.append({'name': key, 'data': temp.get(key)})
+
+  for key in result:
+    key['data'] = sorted(key['data'], key=lambda a: a['x'])
+
+  consumer.close()
+  return render('fetch_timeline.mako', request, dict(data=result))
+
+def fetch_alert(request):
+  consumer = KafkaConsumer(
+          bootstrap_servers='en1:9092,en2:9092,en3:9092',
+          auto_offset_reset='earliest'
+  )
+  consumer.subscribe(['ApacheLogAlert'])
+
+  time = int(request.GET.get('time', '0'));
+  test = consumer.poll(10000)
+  result = []
+  for aa in test:
+    cc = test.get(aa)
+    for msg in cc:
+      print msg
+
+      try:
+        int(msg.value) + 2
+        int(msg.key) + 2
+      except:
+        continue
+
+      if int(msg.key) <= time or int(msg.value) <= 0:
+        continue
+      t = datetime.datetime.fromtimestamp(int(msg.key) / 1e3).strftime('%Y-%m-%d %H:%M:%S')
+
+      c = msg.value
+      tmp = {t: c}
+      result.append(tmp)
+  consumer.close()
+  return render('fetch_alert.mako', request, dict(data=result))

@@ -27,9 +27,16 @@ ${shared.menubar(section='mytab')}
         </ul>
       </div>
     </div>
+    <div id="page-content-wrapper">
+          <div class="container-fluid">
+              <div class="row">
+                  <div class="col-lg-12">
+                    <div id="chart"></div>
+                  </div>
+              </div>
+          </div>
+      </div>
   </div>
-
-
 </div>
 
 <script src="${ static('desktop/ext/js/knockout.min.js') }" type="text/javascript" charset="utf-8"></script>
@@ -39,6 +46,7 @@ ${shared.menubar(section='mytab')}
 <script src="${ static('desktop/ext/js/moment-with-locales.min.js') }" type="text/javascript" charset="utf-8"></script>
 <script src="${ static('desktop/js/jquery.hiveautocomplete.js') }" type="text/javascript" charset="utf-8"></script>
 <script src="${ static('desktop/js/jquery.filechooser.js') }" type="text/javascript" charset="utf-8"></script>
+<script src="${ static('apachelog/js/highstock.js') }"></script>
 
 <script type="text/javascript" charset="utf-8">
   ko.options.deferUpdates = true;
@@ -54,6 +62,98 @@ ${shared.menubar(section='mytab')}
     changeAlertCount($("#selectAlertCount").val());
   });
 
+  Highcharts.setOptions({
+      global:{
+          useUTC: false
+      }
+  })
+
+  function refreshChart(){
+      var chart = $('#chart').highcharts()
+      $.getJSON('/apachelog/view/fetch_timeline', function (data) {
+
+          $.each(data.data, function(index, value){
+              var order = -1;
+              $.each(chart.series, function(i, s){
+                  if(value.name == s.name){
+                      order = i
+                  }
+              });
+              if(order == -1){
+                  chart.addSeries(value)
+              }
+              else {
+                  $.each(value.data, function(i, v){
+                      var redraw = data.data.length == index + 1 ? true : false
+                      console.log(redraw)
+                      if(chart.series[order].data.length > 10){
+                          chart.series[order].addPoint(v, redraw, true)
+                      }
+                      else {
+                          chart.series[order].addPoint(v, redraw, false)
+                      }
+                  })
+              }
+          })
+      });
+  }
+  $('#chart').highcharts({
+      chart: {
+          type: 'spline',
+          animation: Highcharts.svg, // don't animate in old IE
+          marginRight: 10,
+          events: {
+              load: function () {
+                  refreshChart()
+                  setInterval(function(){
+                      refreshChart()
+                  }, 5000);
+              }
+          }
+      },
+      title: "",
+      xAxis: {
+          type: "datetime",
+          tickPixelInterval: 150,
+          dateTimeLabelFormats:{
+              day: '%b %e',
+              week: '%b %e'
+          }
+      },
+      yAxis: {
+          title: {
+              text: 'Count'
+          },
+          plotLines: [{
+              value: 0,
+              width: 1,
+              color: '#808080'
+          }]
+      },
+      tooltip: {
+          formatter: function () {
+              return '<b>' + this.series.name + '</b><br/>' +
+                      Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                      Highcharts.numberFormat(this.y, 2);
+          }
+      },
+      credits: {
+          enabled: false
+      },
+      legend: {
+          enabled: true
+      },
+      exporting: {
+          enabled: false
+      },
+      plotOptions:{
+          series:{
+              marker: {
+                  enabled: false
+              }
+          }
+      }
+  });
 </script>
 
 
