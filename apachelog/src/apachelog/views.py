@@ -32,20 +32,20 @@ def index(request):
 def fetch_selected_option(name):
   result = {'status': -1, 'value' : '', 'message': 'Error'}
   if name == 'time':
-    defaultVal = '10초'
+	defaultVal = '10초'
   elif name == 'alert':
-    defaultVal = '100';
+	defaultVal = '100';
 
   try:
 	  time = SelectedOption.objects.get(sel_name=name)
   except SelectedOption.DoesNotExist:
-    time = None
+	time = None
   
   if(time):
-    result['value'] = time.sel_val
+	result['value'] = time.sel_val
   else:
-    SelectedOption.objects.create(sel_name=name, sel_val=defaultVal)
-    result['value'] = defaultVal
+	SelectedOption.objects.create(sel_name=name, sel_val=defaultVal)
+	result['value'] = defaultVal
   
   result['status'] = 0
   result['message'] = 'seccess'
@@ -64,12 +64,12 @@ def update_sel_data(request, name):
   result = {'status': -1, 'message': 'Error'}
   
   try:
-    time = json.loads(request.POST[name])
-    SelectedOption.objects.filter(sel_name=name).update(sel_val=time)
+	time = json.loads(request.POST[name])
+	SelectedOption.objects.filter(sel_name=name).update(sel_val=time)
   except:
-    print "Error occurred: ", sys.exc_info()
-    result['message'] = sys.exc_info()
-    return result;
+	print "Error occurred: ", sys.exc_info()
+	result['message'] = sys.exc_info()
+	return result;
 
   result['status'] = 0
   result['message'] = 'secceeded'
@@ -83,42 +83,51 @@ def update_sel_alert(request):
 
 def fetch_timeline(request):
   consumer = KafkaConsumer(
-          'ApacheLogAlert',
-          bootstrap_servers='en1:9092,en2:9092,en3:9092',
-          enable_auto_commit=True,
-          auto_offset_reset='earliest'
+		  'ApacheLogAlert',
+    	  bootstrap_servers='en1:9092,en2:9092,en3:9092',
+		  enable_auto_commit=True,
+		  auto_offset_reset='earliest'
   )
+
+  time = int(request.GET.get('time', 0));
+  threshold = int(request.GET.get('threshold', -1));
 
   test = consumer.poll(5000)
   i = 0
   temp = {}
-  for topic in test:
-    cc = test.get(topic)
-    for msg in cc:
-      print msg
-      x = msg.key.split(' ')[0]
-      y = msg.value.split(',')[2]
-      key = msg.value.split(',')[1]
-
-      if key in temp:
-        temp[key].append({'x': int(x), 'y': int(y)})
-      else:
-        temp[key] = []
-        temp[key].append({'x': int(x), 'y': int(y)})
   result = []
+  threshold_list = []
+  for topic in test:
+	cc = test.get(topic)
+	for msg in cc:
+	  print msg
+	  x = msg.key.split(' ')[0]
+	  y = msg.value.split(',')[2]
+	  key = msg.value.split(',')[1]
+
+	  if int(x) > time and threshold > -1 and int(y) >= threshold:
+		print x, time, y, threshold
+		threshold_list.append({'x': int(x), 'y': int(y), 'key': int(key)})
+
+	  if key in temp:
+		temp[key].append({'x': int(x), 'y': int(y)})
+	  else:
+		temp[key] = []
+		temp[key].append({'x': int(x), 'y': int(y)})
+
   for key in temp:
-    result.append({'name': key, 'data': temp.get(key)})
+	result.append({'name': key, 'data': temp.get(key)})
 
   for key in result:
-    key['data'] = sorted(key['data'], key=lambda a: a['x'])
+	key['data'] = sorted(key['data'], key=lambda a: a['x'])
 
   consumer.close()
-  return render('fetch_timeline.mako', request, dict(data=result))
+  return render('fetch_timeline.mako', request, dict(data=result, threshold=threshold_list))
 
 def fetch_alert(request):
   consumer = KafkaConsumer(
-          bootstrap_servers='en1:9092,en2:9092,en3:9092',
-          auto_offset_reset='earliest'
+		  bootstrap_servers='en1:9092,en2:9092,en3:9092',
+		  auto_offset_reset='earliest'
   )
   consumer.subscribe(['ApacheLogAlert'])
 
@@ -126,22 +135,22 @@ def fetch_alert(request):
   test = consumer.poll(10000)
   result = []
   for aa in test:
-    cc = test.get(aa)
-    for msg in cc:
-      print msg
+	cc = test.get(aa)
+	for msg in cc:
+	  print msg
 
-      try:
-        int(msg.value) + 2
-        int(msg.key) + 2
-      except:
-        continue
+	  try:
+		int(msg.value) + 2
+		int(msg.key) + 2
+	  except:
+		continue
 
-      if int(msg.key) <= time or int(msg.value) <= 0:
-        continue
-      t = datetime.datetime.fromtimestamp(int(msg.key) / 1e3).strftime('%Y-%m-%d %H:%M:%S')
+	  if int(msg.key) <= time or int(msg.value) <= 0:
+		continue
+	  t = datetime.datetime.fromtimestamp(int(msg.key) / 1e3).strftime('%Y-%m-%d %H:%M:%S')
 
-      c = msg.value
-      tmp = {t: c}
-      result.append(tmp)
+	  c = msg.value
+	  tmp = {t: c}
+	  result.append(tmp)
   consumer.close()
   return render('fetch_alert.mako', request, dict(data=result))

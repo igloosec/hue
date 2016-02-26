@@ -1,16 +1,32 @@
 
-var ApachelogViewModel = function() {
-  self.availableStreamingTime = ko.observableArray(['10초', '30초', '1분', '5분', '10분', '30분', '1시간']);
-  self.chosenStreamingTime = ko.observableArray(['10초']); 
+var SelectBoxMap = function(key, value){
+    this.key = key;
+    this.value = value;
+}
 
-  self.selectableStreamingTime = ko.computed(function() {
-    var _times = ko.utils.arrayMap(self.availableStreamingTime(), function (time) {
-      return time;
-    });
-		
+var ApachelogViewModel = function() {
+	self.availableStreamingTime = ko.observableArray([
+        new SelectBoxMap('10초', 10),
+        new SelectBoxMap('30초', 30),
+        new SelectBoxMap('1분', 60),
+        new SelectBoxMap('10분', 600),
+        new SelectBoxMap('15분', 900),
+        new SelectBoxMap('30분', 1800),
+        new SelectBoxMap('1시간', 3600)
+    ]);
+
+    self.chosenStreamingTime = ko.observableArray([10]);
+
+    self.selectableStreamingTime = ko.computed(function() {
+        var _times = ko.utils.arrayMap(self.availableStreamingTime(), function (time) {
+          return time;
+        });
+
 		$.post("/apachelog/view/fetch_selected_time_option", {
 		}, function (data) {
-			chosenStreamingTime.push(data.value);
+            //console.log(self.valueToObject(data.value));
+
+			chosenStreamingTime.push(Number(data.value));
 		}).fail(function (xhr, textStatus, errorThrown) {
 			$(document).trigger("error", "fetch select option data failed")
 		});
@@ -18,8 +34,7 @@ var ApachelogViewModel = function() {
   },self);
 	
 	self.changeStreamingTime = function(time) {
-		chosenStreamingTime.push(time);
-		
+        chosenStreamingTime.push(Number(time));
 		$.post("/apachelog/view/update_sel_time", {
 			'time': ko.mapping.toJSON(time)
 		}, function (data) {
@@ -34,8 +49,17 @@ var ApachelogViewModel = function() {
 	}
   
 	
-	self.availableAlertCount = ko.observableArray(['100', '500', '1,000', '5,000', '10,000', '50,000', '100,000']);
-	self.chosenAlertCount = ko.observableArray(['100']);
+	self.availableAlertCount = ko.observableArray([
+        new SelectBoxMap('100', 100),
+        new SelectBoxMap('500', 500),
+        new SelectBoxMap('1000', 1000),
+        new SelectBoxMap('2,600', 2600),
+        new SelectBoxMap('5,000', 5000),
+        new SelectBoxMap('10,000', 10000),
+        new SelectBoxMap('50,000', 50000),
+        new SelectBoxMap('100,000', 100000)
+    ]);
+	self.chosenAlertCount = ko.observableArray([100]);
 
 	self.selectableAlertCount = ko.computed(function() {
     var _alert_count = ko.utils.arrayMap(self.availableAlertCount(), function (count) {
@@ -44,7 +68,7 @@ var ApachelogViewModel = function() {
 		
 		$.post("/apachelog/view/fetch_selected_alert_option", {
 		}, function (data) {
-			chosenAlertCount.push(data.value);
+			chosenAlertCount.push(Number(data.value));
 		}).fail(function (xhr, textStatus, errorThrown) {
 			$(document).trigger("error", "fetch select option data failed")
 		});
@@ -52,7 +76,7 @@ var ApachelogViewModel = function() {
   },self);
 	
 	self.changeAlertCount = function(count) {
-		chosenAlertCount.push(count);
+		chosenAlertCount.push(Number(count));
 		
 		$.post("/apachelog/view/update_sel_alert", {
 			'alert': ko.mapping.toJSON(count)
