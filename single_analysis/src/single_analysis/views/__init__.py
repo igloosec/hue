@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Licensed to Cloudera, Inc. under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -13,9 +14,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-DJANGO_APPS = [ "single_analysis" ]
-REQUIRES_HADOOP = False
-MENU_INDEX = 100
-ICON = "single_analysis/art/icon_single_analysis_48.png"
-
-IS_URL_NAMESPACED = True

@@ -1,5 +1,6 @@
 
 <%!
+from django.utils.translation import ugettext as _
 def is_selected(section, matcher):
   if section == matcher:
     return "active"
@@ -16,11 +17,11 @@ def is_selected(section, matcher):
             <li class="currentApp">
               <a href="/single_analysis">
                 <img src="${ static('single_analysis/art/icon_single_analysis_48.png') }" class="app-icon" />
-                Single Analysis
+                단일경보
               </a>
              </li>
-             <li class="${is_selected(section, 'alert')}"><a href="#">경보</a></li>
-             <li class="${is_selected(section, 'config')}"><a href="#">설정</a></li>
+             <li class="${is_selected(section, 'alert')}"><a href="${url('single_analysis:alert')}">경보</a></li>
+             <li class="${is_selected(section, 'config')}"><a href="${url('single_analysis:config')}">설정</a></li>
           </ul>
         </div>
       </div>

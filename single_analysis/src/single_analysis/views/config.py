@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from desktop.lib.django_util import render
+from desktop.lib.django_util import render, JsonResponse
 import datetime
 
 def index(request):
-  return render('index.mako', request, dict(date=datetime.datetime.now()))
+  return render('config/index.mako', request, dict(date=datetime.datetime.now()))

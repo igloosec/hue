@@ -17,7 +17,11 @@
 
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('single_analysis',
-  url(r'^$', 'views.index'),
-  url(r'config^$', 'views.config.config'),
+
+urlpatterns = patterns('single_analysis.views.alert',
+  url(r'^$', 'index', name='alert'),
+)
+
+urlpatterns += patterns('single_analysis.views.config',
+  url(r'^config$', 'index', name='config'),
 )
